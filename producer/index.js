@@ -1,6 +1,9 @@
 const express = require("express");
 const kafka = require("kafka-node");
+const cors = require("cors");
 const app = express();
+
+app.use(cors());
 app.use(express.json());
 
 const client = new kafka.KafkaClient({

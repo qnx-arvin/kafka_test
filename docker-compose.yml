@@ -50,13 +50,13 @@ services:
     depends_on:
       - kafka
       - mongo
-  # frontend:
-  #   container_name: frontend
-  #   build: ./frontend
-  #   ports:
-  #     - 3000:3000
-  #   volumes:
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #   environment:
-  #     - NODE_ENV=development
+  frontend:
+    container_name: frontend
+    build: ./frontend
+    ports:
+      - 5173:5173
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
