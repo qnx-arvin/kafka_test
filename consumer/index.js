@@ -1,17 +1,13 @@
 const express = require("express");
+const expressWs = require("express-ws");
 const kafka = require("kafka-node");
 const cors = require("cors");
-const mongoose = require("mongoose");
+
+// Express app and set up WebSocket
 const app = express();
+expressWs(app);
 
-app.use(cors());
-app.use(express.json());
-
-mongoose.connect(process.env.MONGO_URL);
-const Messages = new mongoose.model("messages", {
-  message: String,
-});
-
+// Kafka Consumer
 const client = new kafka.KafkaClient({
   kafkaHost: process.env.KAFKA_BOOTSTRAP_SERVER,
 });
@@ -20,26 +16,22 @@ const consumer = new kafka.Consumer(
   [{ topic: process.env.KAFKA_TOPIC }],
   {
     autoCommit: false,
-    fromOffset: "latest",
   }
 );
 
-consumer.on("message", async (message) => {
-  const user = await new Messages(JSON.parse(message.value));
-  await user.save();
-});
+// WebSocket connection handler
+app.ws("/ws", (ws, req) => {
+  console.log("WebSocket client connected");
 
-consumer.on("error", (err) => {
-  console.log(err);
-});
+  // Send messages to WebSocket clients
+  consumer.on("message", (message) => {
+    console.log("Received message:", message.value);
+    ws.send(message.value);
+  });
 
-app.get("/message", async (req, res) => {
-  const data = await Messages.find();
-  const messages = data.map((item) => ({
-    id: item._id,
-    message: item.message,
-  }));
-  res.send(messages);
+  ws.on("close", () => {
+    console.log("WebSocket client disconnected");
+  });
 });
 
 app.listen(process.env.PORT, () => {

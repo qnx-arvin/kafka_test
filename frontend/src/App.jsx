@@ -6,11 +6,17 @@ function App() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8081/message")
-      .then((response) => response.json())
-      .then((data) => setData(data))
-      .catch((error) => console.error("Error:", error));
-  });
+    const ws = new WebSocket("ws://localhost:8081/ws");
+
+    ws.onmessage = (event) => {
+      const newMessage = event.data;
+      setData((prevMessages) => [...prevMessages, newMessage]);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,14 +39,12 @@ function App() {
           <h1>Consumer Data</h1>
           {data.length > 0 ? (
             <ul>
-              {data.map((item) => (
-                <li key={item.id}>
-                  ID: {item.id}, Message: {item.message}
-                </li>
+              {data.map((item, index) => (
+                <li key={index}>{item}</li>
               ))}
             </ul>
           ) : (
-            <p>Loading...</p>
+            <p>No message</p>
           )}
         </div>
         <div className="half">
